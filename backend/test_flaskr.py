@@ -20,13 +20,6 @@ class TriviaTestCase(unittest.TestCase):
         )
         setup_db(self.app, self.database_path)
 
-        self.new_question = {
-            "question": "How many apples in apple pie?",
-            "category": "2",
-            "answer": "A lot",
-            "difficulty": 4,
-        }
-
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -40,7 +33,8 @@ class TriviaTestCase(unittest.TestCase):
 
     """
     TODO
-    Write at least one test for each test for successful operation and for expected errors.
+    Write at least one test for each test for successful
+    operation and for expected errors.
     """
 
     def test_get_paginated_questions(self):
@@ -73,18 +67,34 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 404)
 
-    # def test_delete_question(self):
-    #     res = self.client().delete("/questions/58")
+    # def test_add_question(self):
+    #     new_question = {
+    #         "question": "How many apples in apple pie?",
+    #         "category": "2",
+    #         "answer": "A lot",
+    #         "difficulty": 4,
+    #     }
+    #     res = self.client().post("/questions", json=new_question)
     #     data = json.loads(res.data)
     #
-    #     question = Question.query.filter(Question.id == 58).one_or_none()
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data["success"], True)
+    #     self.assertTrue(data["created"])
+
+    # def test_delete_question(self):
+    #     question_to_delete = Question.query.first()
+    #     res = self.client().delete(f"/questions/{question_to_delete.id}")
+    #     data = json.loads(res.data)
+    #
+    #     question = Question.query.\
+    #         filter(Question.id == question_to_delete.id).one_or_none()
     #
     #     self.assertEqual(res.status_code, 200)
     #     self.assertEqual(data['success'], True)
-    #     self.assertEqual(data['deleted'], 58)
+    #     self.assertEqual(data['deleted'], question_to_delete.id)
     #     self.assertTrue(data['total_questions'])
     #     self.assertTrue(len(data['questions']))
-    #     self.assertEqual(question, None)
+    #     self.assertIsNone(question)
 
     def test_422_delete_non_existing_question(self):
         res = self.client().delete("/questions/4000")
@@ -94,16 +104,9 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], False)
         self.assertEqual(data["message"], "unprocessable")
 
-    # def test_add_question(self):
-    #     res = self.client().post("/questions", json=self.new_question)
-    #     data = json.loads(res.data)
-    #
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data["success"], True)
-    #     self.assertTrue(data["created"])
-
     def test_get_question_search_results(self):
-        res = self.client().post("/questions/search", json={"searchTerm": "organ"})
+        res = self.client().post("/questions/search",
+                                 json={"searchTerm": "organ"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -150,16 +153,26 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
 
-    def test_404_quiz_category_not_found(self):
-        quiz_data = {
-            "previous_questions": [],
-            "categories": {"type": "Sport", "id": 10},
-        }
-        res = self.client().post("/quizzes", json=quiz_data)
-        data = json.loads(res.data)
+    def test_play_quiz_random_question_selected(self):
+        # Test with valid category and multiple questions available
+        quiz_data = {"quiz_category": {"id": 1}}
+        res_1 = self.client().post("/quizzes", json=quiz_data)
+        data_1 = json.loads(res_1.data)
+        print("data", data_1["question"])
 
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(data["success"], False)
+        self.assertEqual(res_1.status_code, 200)
+        self.assertEqual(data_1["success"], True)
+        self.assertIsNotNone(data_1["question"])
+
+        # Test that a different question is returned on second request
+        quiz_data = {"quiz_category": {"id": 1}}
+        res_2 = self.client().post("/quizzes", json=quiz_data)
+        data_2 = json.loads(res_2.data)
+
+        self.assertEqual(res_2.status_code, 200)
+        self.assertEqual(data_2["success"], True)
+        self.assertIsNotNone(data_2["question"])
+        self.assertNotEqual(data_1["question"], data_2["question"])
 
 
 # Make the tests conveniently executable

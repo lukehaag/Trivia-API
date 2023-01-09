@@ -29,7 +29,8 @@ def create_app(test_config=None):
     app.app_context().push()
 
     """
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    @TODO: Set up CORS. Allow '*' for origins.
+    Delete the sample route after completing the TODOs
     """
 
     """
@@ -64,7 +65,8 @@ def create_app(test_config=None):
         return jsonify(
             {
                 "success": True,
-                "categories": {category.id: category.type for category in categories},
+                "categories": {category.id: category.type
+                               for category in categories},
             }
         )
 
@@ -77,12 +79,14 @@ def create_app(test_config=None):
 
     TEST: At this point, when you start the application
     you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
+    ten questions per page and pagination
+    at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
     """
 
     # Handles GET requests to endpoint questions.
-    # Returns a list of questions, count of total questions, categories and current category
+    # Returns a list of questions, count of total questions,
+    # categories and current category
     @app.route("/questions")
     def retrieve_questions():
         # Retrieves all the questions and  paginate them with 10 per page
@@ -98,7 +102,8 @@ def create_app(test_config=None):
                 "success": True,
                 "questions": current_questions,
                 "total_questions": len(selection),
-                "categories": {category.id: category.type for category in categories},
+                "categories": {category.id: category.type
+                               for category in categories},
                 "current_category": None,
             }
         )
@@ -107,17 +112,21 @@ def create_app(test_config=None):
     @TODO:
     Create an endpoint to DELETE question using a question ID.
 
-    TEST: When you click the trash icon next to a question, the question will be removed.
+    TEST: When you click the trash icon next to a question,
+     the question will be removed.
     This removal will persist in the database and when you refresh the page.
     """
 
     # Handles DELETE requests for questions based on ID.
-    # Returns deleted question's id, current questions and list of remaining questions
+    # Returns deleted question's id, current questions
+    # and list of remaining questions
     @app.route("/questions/<int:question_id>", methods=["DELETE"])
     def delete_question(question_id):
-        # Try to delete question, if question does not exist display a 404 error
+        # Try to delete question
+        # if question does not exist display a 404 error
         try:
-            question = Question.query.filter(Question.id == question_id).one_or_none()
+            question = Question.query \
+                .filter(Question.id == question_id).one_or_none()
             if question is None:
                 abort(404)
             # Deletes the question and refreshes te page to show updated list
@@ -134,7 +143,8 @@ def create_app(test_config=None):
                 }
             )
 
-        except:
+        except Exception as e:
+            print(e)
             abort(422)
 
     """
@@ -144,7 +154,8 @@ def create_app(test_config=None):
     category, and difficulty score.
 
     TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
+    the form will clear and the question
+     will appear at the end of the last page
     of the questions list in the "List" tab.
     """
 
@@ -157,7 +168,8 @@ def create_app(test_config=None):
         new_answer = body.get("answer")
         new_category = body.get("category")
         new_difficulty = body.get("difficulty")
-        # Tries to create new question object based on results and inserts it into database
+        # Tries to create new question object
+        # based on results and inserts it into database
         try:
             question = Question(
                 question=new_question,
@@ -192,12 +204,14 @@ def create_app(test_config=None):
     Try using the word "title" to start.
     """
 
-    # Takes in a search term and deletes all questions that are similar to the search term
+    # Takes in a search term and deletes all questions
+    # that are similar to the search term
     @app.route("/questions/search", methods=["POST"])
     def search_question():
         body = request.get_json()
         search = body.get("searchTerm", None)
-        # If search contains a value then find all current questions based on a case-insensitive search
+        # If search contains a value
+        # then find all current questions based on a case-insensitive search
         if search:
             current_questions = Question.query.filter(
                 Question.question.ilike("%{}%".format(search))
@@ -206,7 +220,8 @@ def create_app(test_config=None):
             return jsonify(
                 {
                     "success": True,
-                    "questions": [question.format() for question in current_questions],
+                    "questions": [question.format() for question in
+                                  current_questions],
                     "total_questions": len(current_questions),
                     "current_category": None,
                 }
@@ -250,37 +265,56 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     """
 
-    # Retrieves the questions to play the quiz Also retrieves the category if applicable as well as previous
-    # questions and then chooses a new question based on category and whether the question is in the previous
+    # Retrieves the questions to play the quiz
+    # Also retrieves the category if applicable as well as previous
+    # questions and then chooses a new question based on category
+    # and whether the question is in the previous
     # questions list
     @app.route("/quizzes", methods=["POST"])
     def play_quiz():
         try:
             body = request.get_json()
 
-            category = body.get("categories")
+            category = body.get("quiz_category", {}).get("id")
             previous_questions = body.get("previous_questions")
+
             # Creates an empty list if previous questions is empty
             if not previous_questions:
                 previous_questions = []
-            # If category contains a value filter questions based on that category
+
+            # If category contains a value
+            # filter questions based on that category
             # Else fetch all questions
             if category:
                 questions = (
-                    Question.query.filter_by(category=category)
+                    Question.query.filter(Question.category == category)
                     .filter(Question.id.notin_(previous_questions))
                     .all()
                 )
+
             else:
                 questions = Question.query.filter(
                     Question.id.notin_(previous_questions)
                 ).all()
-            # Select a random question from list of questions and add it to previous questions
-            question = random.choice(questions)
-            previous_questions.append(question)
 
-            return jsonify({"success": True, "question": question.format()})
-        except:
+            if not questions:
+                return jsonify(
+                    {"success": True, "question": None})
+
+            # Select a random question from
+            # list of questions and add it to previous questions
+            question = random.choice(questions)
+            previous_questions.append(question.id)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "question": question.format(),
+                    "previous_questions": previous_questions
+                }
+            )
+        except Exception as e:
+            print("Error:", e)
             abort(422)
 
     """
@@ -292,21 +326,24 @@ def create_app(test_config=None):
     @app.errorhandler(400)
     def not_found(error):
         return (
-            jsonify({"success": False, "error": 404, "message": "bad request"}),
+            jsonify({"success": False,
+                     "error": 404, "message": "bad request"}),
             400,
         )
 
     @app.errorhandler(404)
     def not_found(error):
         return (
-            jsonify({"success": False, "error": 404, "message": "resource not found"}),
+            jsonify({"success": False,
+                     "error": 404, "message": "resource not found"}),
             404,
         )
 
     @app.errorhandler(422)
     def unprocessable(error):
         return (
-            jsonify({"success": False, "error": 422, "message": "unprocessable"}),
+            jsonify({"success": False,
+                     "error": 422, "message": "unprocessable"}),
             422,
         )
 
