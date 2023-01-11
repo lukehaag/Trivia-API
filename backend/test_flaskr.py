@@ -159,13 +159,12 @@ class TriviaTestCase(unittest.TestCase):
         res_1 = self.client().post("/quizzes", json=quiz_data)
         data_1 = json.loads(res_1.data)
         print("data", data_1["question"])
-
         self.assertEqual(res_1.status_code, 200)
         self.assertEqual(data_1["success"], True)
         self.assertIsNotNone(data_1["question"])
 
         # Test that a different question is returned on second request
-        quiz_data = {"quiz_category": {"id": 1}}
+        quiz_data = {"quiz_category": {"id": 1}, "previous_questions": data_1["previous_questions"]}
         res_2 = self.client().post("/quizzes", json=quiz_data)
         data_2 = json.loads(res_2.data)
 
@@ -173,6 +172,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data_2["success"], True)
         self.assertIsNotNone(data_2["question"])
         self.assertNotEqual(data_1["question"], data_2["question"])
+
 
 
 # Make the tests conveniently executable

@@ -303,7 +303,11 @@ def create_app(test_config=None):
 
             # Select a random question from
             # list of questions and add it to previous questions
-            question = random.choice(questions)
+            for ques in questions:
+                print("current", ques)
+            for prev in previous_questions:
+                print("prev", prev)
+            question = questions[random.randrange(0, len(questions))]
             previous_questions.append(question.id)
 
             return jsonify(

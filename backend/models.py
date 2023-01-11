@@ -1,10 +1,12 @@
 import os
 from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
 import json
 
-# database_name = "trivia"
-# database_path = "postgresql://{}/{}".format("localhost:5432", database_name)
+load_dotenv()
+SECRET_KEY = os.environ.get("dev_only")
+
 DB_HOST = os.getenv('DB_HOST', '127.0.0.1:5432')
 DB_USER = os.getenv('DB_USER', 'lukehaag')
 DB_PASSWORD = os.getenv('DB_PASSWORD', None)
